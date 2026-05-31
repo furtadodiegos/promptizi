@@ -1,0 +1,21 @@
+{
+  "name": "promptizi",
+  "version": "0.1.0",
+  "description": "A two-agent team that builds & gates code via GitHub.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "evals": "node evals/run.mjs",
+    "builder": "node agents/builder/run.mjs",
+    "validator": "node agents/validator/run.mjs"
+  },
+  "keywords": [
+    "ai-agents",
+    "llm",
+    "github-actions",
+    "code-review",
+    "evals"
+  ],
+  "author": "Diego Furtado",
+  "license": "MIT"
+}
