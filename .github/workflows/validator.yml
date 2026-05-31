@@ -1,0 +1,72 @@
+name: validator
+
+# QUANDO rodar: toda vez que um PR é aberto, atualizado ou reaberto.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+# PERMISSÕES: o que esse workflow pode fazer no repo.
+permissions:
+  contents: read # ler o código
+  pull-requests: write # comentar no PR
+  statuses: write # marcar status check (verde/vermelho)
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. baixa o código do repo
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # pega TODA a história (precisamos comparar com main)
+
+      # 2. instala o Node
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # 3. roda o Validator (mesmo comando que você roda local!)
+      - name: Run Validator Agent
+        id: validate
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          # nome da branch do PR
+          BRANCH="${{ github.head_ref }}"
+
+          # roda o validator capturando a saída e o exit code
+          node agents/validator/run.mjs "$BRANCH" | tee verdict.txt
+          # captura o exit code (0 = approve, 1 = request_changes)
+          echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
+
+      # 4. comenta no PR com o veredito
+      - name: Comment on PR
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const verdict = fs.readFileSync('verdict.txt', 'utf8');
+            await github.rest.issues.createComment({
+              issue_number: context.payload.pull_request.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '## 🕵️ Validator Agent\n\n```\n' + verdict + '\n```',
+            });
+
+      # 5. seta o status check (verde se aprovou, vermelho se reprovou)
+      - name: Set commit status
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const exitCode = '${{ steps.validate.outputs.exit_code }}';
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.payload.pull_request.head.sha,
+              state: exitCode === '0' ? 'success' : 'failure',
+              context: 'validator-agent',
+              description: exitCode === '0' ? 'Approved by Validator' : 'Changes requested',
+            });
