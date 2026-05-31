@@ -100,3 +100,38 @@ function applyPlan(plan) {
   execSync(`git checkout -b ${plan.branch}`, {
     cwd: REPO_ROOT,
     stdio: "inherit",
+  });
+
+  for (const file of plan.files) {
+    const full = path.join(REPO_ROOT, file.path);
+    fs.mkdirSync(path.dirname(full), { recursive: true });
+    fs.writeFileSync(full, file.content);
+    console.log(`  📄 ${file.action}: ${file.path}`);
+  }
+
+  execSync("git add -A", { cwd: REPO_ROOT, stdio: "inherit" });
+  execSync(`git commit -m ${JSON.stringify(plan.commit_message)}`, {
+    cwd: REPO_ROOT,
+    stdio: "inherit",
+  });
+
+  console.log(`\n✅ Branch '${plan.branch}' pronta. Para subir:`);
+  console.log(`   git push -u origin ${plan.branch}`);
+}
+
+// ─── EXECUÇÃO ────────────────────────────────────────────────────
+
+const issue = readIssue();
+const snapshot = repoSnapshot();
+
+console.log("🤖 Builder pensando...\n");
+const resposta = await callClaude({ system: SYSTEM, issue, snapshot });
+
+const plan = parsePlan(resposta);
+console.log(`\n📋 Plano: ${plan.branch}\n`);
+
+applyPlan(plan);
+
+if (plan.notes) {
+  console.log(`\n📝 Notes do robô:\n${plan.notes}`);
+}
