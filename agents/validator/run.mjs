@@ -39,13 +39,13 @@ function readDiff() {
     throw new Error("Uso: node agents/validator/run.mjs <branch-name>");
   }
 
-  const raw = execSync(`git diff main...${branch}`, {
+  const raw = execSync(`git diff origin/main...${branch}`, {
     cwd: REPO_ROOT,
     encoding: "utf8",
   });
 
   if (!raw.trim()) {
-    throw new Error(`Sem diff entre main e ${branch} — branch existe?`);
+    throw new Error(`Sem diff entre origin/main e ${branch} — branch existe?`);
   }
 
   // separa por arquivo, descarta lockfiles
