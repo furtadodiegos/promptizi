@@ -17,5 +17,8 @@
     "evals"
   ],
   "author": "Diego Furtado",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "tiktoken": "^1.0.17"
+  }
 }
