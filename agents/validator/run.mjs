@@ -30,6 +30,29 @@ const IGNORED_PATHS = [
 const MAX_DIFF_CHARS = 50_000; // protege custo/latência
 
 /**
+ * Resolve uma ref git de forma resiliente.
+ * Tenta o nome local primeiro; se não existir, cai para origin/<nome>.
+ * Necessário porque no CI (checkout do merge ref, HEAD destacado) não há
+ * branch local — só refs remotas em refs/remotes/origin/*.
+ * @param {string} ref
+ * @returns {string} a ref que existe (ex.: "main" ou "origin/main")
+ */
+function resolveRef(ref) {
+  for (const candidate of [ref, `origin/${ref}`]) {
+    try {
+      execSync(`git rev-parse --verify --quiet ${candidate}`, {
+        cwd: REPO_ROOT,
+        stdio: "ignore",
+      });
+      return candidate;
+    } catch {
+      // tenta o próximo candidato
+    }
+  }
+  throw new Error(`Ref não encontrada: ${ref} (nem origin/${ref})`);
+}
+
+/**
  * Retorna o diff entre a branch passada e main.
  * Filtra lockfiles e trunca se passar do limite.
  */
@@ -39,13 +62,16 @@ function readDiff() {
     throw new Error("Uso: node agents/validator/run.mjs <branch-name>");
   }
 
-  const raw = execSync(`git diff main...${branch}`, {
+  const base = resolveRef("main");
+  const head = resolveRef(branch);
+
+  const raw = execSync(`git diff ${base}...${head}`, {
     cwd: REPO_ROOT,
     encoding: "utf8",
   });
 
   if (!raw.trim()) {
-    throw new Error(`Sem diff entre main e ${branch} — branch existe?`);
+    throw new Error(`Sem diff entre ${base} e ${head} — branch existe?`);
   }
 
   // separa por arquivo, descarta lockfiles
