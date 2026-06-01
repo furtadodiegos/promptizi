@@ -1,0 +1,5 @@
+{
+  "decision": "request_changes",
+  "rule_focus": "Rule 5 — No secrets or debug noise",
+  "why": "Adiciona um console.log de debug dentro de countTokens em src/. Rule 5 é blocking e proíbe console.log em src/ → deve pedir mudanças."
+}

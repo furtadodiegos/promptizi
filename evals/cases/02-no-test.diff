@@ -1,0 +1,22 @@
+diff --git a/src/index.mjs b/src/index.mjs
+index e47d7a5..a1b2c3d 100644
+--- a/src/index.mjs
++++ b/src/index.mjs
+@@ -22,3 +22,16 @@ export function countTokens(prompt) {
+
+   return encoder.encode(prompt).length;
+ }
++
++/**
++ * Trunca um prompt a um número máximo de caracteres.
++ *
++ * @param {string} prompt - O texto a truncar.
++ * @param {number} max - Tamanho máximo em caracteres.
++ * @returns {string} O prompt truncado.
++ */
++export function truncate(prompt, max) {
++  if (typeof prompt !== "string") {
++    throw new TypeError("prompt deve ser uma string");
++  }
++  return prompt.slice(0, max);
++}

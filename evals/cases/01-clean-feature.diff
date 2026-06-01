@@ -1,0 +1,45 @@
+diff --git a/src/index.mjs b/src/index.mjs
+index e47d7a5..98ff2b4 100644
+--- a/src/index.mjs
++++ b/src/index.mjs
+@@ -22,3 +22,17 @@ export function countTokens(prompt) {
+
+   return encoder.encode(prompt).length;
+ }
++
++/**
++ * Conta as palavras de um prompt (separadas por espaço em branco).
++ *
++ * @param {string} prompt - O texto a contar.
++ * @returns {number} Quantidade de palavras.
++ */
++export function countWords(prompt) {
++  if (typeof prompt !== "string") {
++    throw new TypeError("prompt deve ser uma string");
++  }
++  if (prompt.trim() === "") return 0;
++  return prompt.trim().split(/\s+/).length;
++}
+diff --git a/test/index.test.mjs b/test/index.test.mjs
+index 0d62741..b4e2598 100644
+--- a/test/index.test.mjs
++++ b/test/index.test.mjs
+@@ -1,6 +1,6 @@
+ import { test } from "node:test";
+ import assert from "node:assert/strict";
+-import { countTokens } from "../src/index.mjs";
++import { countTokens, countWords } from "../src/index.mjs";
+
+ test("conta 1 token para 'hello'", () => {
+   assert.equal(countTokens("hello"), 1);
+@@ -9,3 +9,11 @@ test("string vazia retorna 0 tokens", () => {
+   assert.equal(countTokens(""), 0);
+ });
++
++test("conta palavras de uma frase", () => {
++  assert.equal(countWords("oi mundo bonito"), 3);
++});
++
++test("string só com espaços retorna 0 palavras", () => {
++  assert.equal(countWords("   "), 0);
++});

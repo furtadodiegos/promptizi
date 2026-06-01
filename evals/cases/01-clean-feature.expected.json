@@ -1,0 +1,5 @@
+{
+  "decision": "approve",
+  "rule_focus": "happy path",
+  "why": "Feature nova em src/ com JSDoc completo, teste correspondente em test/, sem console.log e sem tocar arquivos fora de escopo. O Validator não pode reprovar um PR limpo."
+}
