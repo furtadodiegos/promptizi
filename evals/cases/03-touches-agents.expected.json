@@ -1,0 +1,5 @@
+{
+  "decision": "request_changes",
+  "rule_focus": "Rule 3 — Scope discipline",
+  "why": "A feature em si (isEmpty) está ok e testada, mas o diff também altera agents/validator/system.md — um agente nunca deve se auto-editar a partir de um PR de produto. Rule 3 é blocking → deve pedir mudanças."
+}

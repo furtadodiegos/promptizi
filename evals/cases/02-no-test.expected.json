@@ -1,0 +1,5 @@
+{
+  "decision": "request_changes",
+  "rule_focus": "Rule 1 — Tests accompany behavior changes",
+  "why": "Adiciona a função truncate() em src/ (novo comportamento runtime) mas não inclui nenhum teste em test/. Rule 1 é blocking → deve pedir mudanças."
+}

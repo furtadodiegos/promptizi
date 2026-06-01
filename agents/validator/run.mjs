@@ -14,11 +14,12 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { execSync } from "node:child_process";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const REPO_ROOT = path.resolve(__dirname, "..", "..");
 
 // ─── ETAPA A: Instruções ─────────────────────────────────────────
-const SYSTEM = fs.readFileSync(path.join(__dirname, "system.md"), "utf8");
+export const SYSTEM = fs.readFileSync(path.join(__dirname, "system.md"), "utf8");
 
 // ─── ETAPA B: Contexto (o diff) ──────────────────────────────────
 
@@ -53,13 +54,14 @@ function resolveRef(ref) {
 }
 
 /**
- * Retorna o diff entre a branch passada e main.
- * Filtra lockfiles e trunca se passar do limite.
+ * Retorna o diff entre main e a branch dada, filtrando lockfiles e
+ * truncando se passar do limite. Reutilizável pelo runner/captura de evals.
+ * @param {string} branch
+ * @returns {string} o diff pronto pra revisão
  */
-function readDiff() {
-  const branch = process.argv[2];
+export function diffForBranch(branch) {
   if (!branch) {
-    throw new Error("Uso: node agents/validator/run.mjs <branch-name>");
+    throw new Error("Informe a branch: diffForBranch(<branch-name>)");
   }
 
   const base = resolveRef("main");
@@ -94,7 +96,7 @@ function readDiff() {
 
 const MODEL = "claude-opus-4-7";
 
-async function callClaude({ system, diff }) {
+export async function callClaude({ system, diff }) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     throw new Error("ANTHROPIC_API_KEY não encontrada no ambiente");
@@ -130,7 +132,7 @@ async function callClaude({ system, diff }) {
 
 // ─── ETAPA D: Parsear veredito e imprimir bonito ─────────────────
 
-function parseVerdict(text) {
+export function parseVerdict(text) {
   const cleaned = text.replace(/```json|```/g, "").trim();
   const start = cleaned.indexOf("{");
   const end = cleaned.lastIndexOf("}");
@@ -169,14 +171,19 @@ function printVerdict(v) {
   console.log("");
 }
 
-// ─── EXECUÇÃO ────────────────────────────────────────────────────
+// ─── EXECUÇÃO (CLI) ──────────────────────────────────────────────
+// Só roda o fluxo de linha de comando quando este arquivo é o entrypoint.
+// Quando importado (ex.: pelo runner de evals), expõe só as funções acima.
+const isMain = process.argv[1] === __filename;
 
-const diff = readDiff();
-console.log(`🕵️  Validator pensando... (${diff.length} chars de diff)\n`);
+if (isMain) {
+  const diff = diffForBranch(process.argv[2]);
+  console.log(`🕵️  Validator pensando... (${diff.length} chars de diff)\n`);
 
-const resposta = await callClaude({ system: SYSTEM, diff });
-const verdict = parseVerdict(resposta);
-printVerdict(verdict);
+  const resposta = await callClaude({ system: SYSTEM, diff });
+  const verdict = parseVerdict(resposta);
+  printVerdict(verdict);
 
-// exit code reflete decisão — útil pro CI depois
-process.exit(verdict.decision === "approve" ? 0 : 1);
+  // exit code reflete decisão — útil pro CI depois
+  process.exit(verdict.decision === "approve" ? 0 : 1);
+}
